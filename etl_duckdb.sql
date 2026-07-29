@@ -1,3 +1,4 @@
+-- nettoyage et dédoublonnage des tables
 CREATE TABLE erp_clean AS
 SELECT DISTINCT
     CAST(product_id AS INT) AS product_id,
@@ -25,6 +26,7 @@ FROM raw_liaison
 WHERE product_id IS NOT NULL
     AND id_web IS NOT NULL;
 
+-- requête finale de fusion
 SELECT
     e.product_id,
     l.id_web,
