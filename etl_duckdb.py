@@ -12,9 +12,9 @@ SQL_FILE = BASE_DIR / "etl_duckdb.sql"
 con = duckdb.connect(database=":memory:")
 
 # dataframe
-df_erp = pd.read_excel(BASE_DIR / "erp.xlsx")
-df_liaison = pd.read_excel(BASE_DIR / "liaison.xlsx")
-df_web = pd.read_excel(BASE_DIR / "web.xlsx")
+df_erp = pd.read_excel(BASE_DIR / "data/Fichier_erp.xlsx")
+df_liaison = pd.read_excel(BASE_DIR / "data/fichier_liaison.xlsx")
+df_web = pd.read_excel(BASE_DIR / "data/Fichier_web.xlsx")
 
 # créatrion table duckdb
 con.register("raw_erp", df_erp)
