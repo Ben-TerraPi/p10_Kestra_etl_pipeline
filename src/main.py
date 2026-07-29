@@ -1,27 +1,46 @@
-from utils import create_df, duckdb_raw_tables, clean_data, merge_data, export_report, classify_wines, export_wine_lists  
+from utils import (
+    create_df,
+    duckdb_raw_tables,
+    clean_data,
+    run_sql_tests,
+    merge_data,
+    classify_wines,
+    export_report,
+    export_wine_lists,
+    validate_business_logic,
+)
+
 
 def main():
+    print("--- Début du pipeline ETL Bottleneck ---")
 
-    # dataframe
+    # dataframes
     df_erp, df_liaison, df_web = create_df()
 
-    # connection duckdb
+    # connexion duckdb
     con = duckdb_raw_tables(df_erp, df_liaison, df_web)
 
-    # nettoyage data
+    # nettoyage 
     clean_data(con)
 
-    # jointure data
+    # tests 
+    run_sql_tests(con)
+
+    # jintures
     df_merged = merge_data(con)
 
-    #calcul CA
+    # rapport CA
     ca_total = export_report(df_merged)
 
-    # calcul pour liste des vins différents
+    # classification des vins
     vins_premium, vins_ordinaires = classify_wines(df_merged)
     export_wine_lists(vins_premium, vins_ordinaires)
 
-    # rapport final
+    # validation finale
+    validate_business_logic(df_merged, vins_premium, vins_ordinaires, ca_total)
+
+    # rapport terminal
+    print(" TESTS REUSSIS : Toutes les données sont conformes aux analyses de Stéphane.")
     print(f"Rapport généré avec succès. CA Total : {ca_total:.2f} €.")
     print(f"Nombre de vins premium identifiés : {len(vins_premium)}.")
     print(f"Nombre de vins ordinaires identifiés : {len(vins_ordinaires)}.")
@@ -29,4 +48,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
