@@ -13,7 +13,7 @@ tasks:
     type: io.kestra.plugin.scripts.python.Commands
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
-    containerImage: python:3.10-slim
+    containerImage: python:3.13-slim
     beforeCommands:
       - pip install pandas openpyxl duckdb
     commands:
