@@ -41,7 +41,7 @@ with pd.ExcelWriter(BASE_DIR / "rapport_chiffre_affaires.xlsx", engine="openpyxl
         index=False,
     )
 
-# calcul des kpi
+# calcul pour liste des vins différents
 mean_price = df_merged["price"].mean()
 std_price = df_merged["price"].std()
 df_merged["z_score"] = (df_merged["price"] - mean_price) / std_price
