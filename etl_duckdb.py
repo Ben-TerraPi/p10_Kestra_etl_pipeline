@@ -1,53 +1,59 @@
-import pandas as pd
+from pathlib import Path
+
 import duckdb
+import pandas as pd
 
-con = duckdb.connect()
-con.execute("INSTALL spatial; LOAD spatial;") # or load pandas df into duckdb
 
-df_erp = pd.read_excel('Fichier_erp.xlsx')
-df_liaison = pd.read_excel('fichier_liaison.xlsx')
-df_web = pd.read_excel('Fichier_web.xlsx')
+# path pour fichier sql
+BASE_DIR = Path(__file__).resolve().parent
+SQL_FILE = BASE_DIR / "etl_duckdb.sql"
 
-con.register('raw_erp', df_erp)
-con.register('raw_liaison', df_liaison)
-con.register('raw_web', df_web)
+# connection duckdb
+con = duckdb.connect(database=":memory:")
 
-# Deduplication SQL
-con.execute("""
-CREATE TABLE clean_erp AS 
-SELECT DISTINCT product_id, onsale_web, price, stock_quantity, stock_status 
-FROM raw_erp 
-WHERE product_id IS NOT NULL;
-""")
+# dataframe
+df_erp = pd.read_excel(BASE_DIR / "erp.xlsx")
+df_liaison = pd.read_excel(BASE_DIR / "liaison.xlsx")
+df_web = pd.read_excel(BASE_DIR / "web.xlsx")
 
-con.execute("""
-CREATE TABLE clean_liaison AS 
-SELECT DISTINCT product_id, id_web 
-FROM raw_liaison 
-WHERE product_id IS NOT NULL AND id_web IS NOT NULL;
-""")
+# créatrion table duckdb
+con.register("raw_erp", df_erp)
+con.register("raw_liaison", df_liaison)
+con.register("raw_web", df_web)
 
-con.execute("""
-CREATE TABLE clean_web AS 
-SELECT DISTINCT sku, total_sales, post_title, post_type 
-FROM raw_web 
-WHERE post_type = 'product' AND sku IS NOT NULL;
-""")
+# requete sql 
+query = SQL_FILE.read_text(encoding="utf-8")
+df_merged = con.execute(query).df()
 
-# Merge SQL
-con.execute("""
-CREATE TABLE merged_data AS
-SELECT 
-    e.product_id,
-    l.id_web,
-    w.post_title,
-    e.price,
-    w.total_sales,
-    (e.price * w.total_sales) AS ca_produit
-FROM clean_erp e
-JOIN clean_liaison l ON e.product_id = l.product_id
-JOIN clean_web w ON l.id_web = w.sku;
-""")
+# calcul du CA
+ca_total = df_merged["chiffre_affaires"].sum()
 
-res = con.execute("SELECT COUNT(*), SUM(ca_produit) FROM merged_data").fetchone()
-print("Merged row count and Total CA:", res)
+# ecriture pour fichier xls
+with pd.ExcelWriter(BASE_DIR / "rapport_chiffre_affaires.xlsx", engine="openpyxl") as writer:
+    df_merged[["product_id", "id_web", "nom_produit", "price", "total_sales", "chiffre_affaires"]].to_excel(
+        writer,
+        sheet_name="CA par Produit",
+        index=False,
+    )
+    pd.DataFrame([{"CA_Total_Euros": ca_total}]).to_excel(
+        writer,
+        sheet_name="CA Global",
+        index=False,
+    )
+
+# calcul des kpi
+mean_price = df_merged["price"].mean()
+std_price = df_merged["price"].std()
+df_merged["z_score"] = (df_merged["price"] - mean_price) / std_price
+
+vins_premium = df_merged[df_merged["z_score"] > 2]
+vins_ordinaires = df_merged[df_merged["z_score"] <= 2]
+
+# crétaion des .csv
+vins_premium.to_csv(BASE_DIR / "vins_premium.csv", index=False)
+vins_ordinaires.to_csv(BASE_DIR / "vins_ordinaires.csv", index=False)
+
+# rapport de fin
+print(f"Rapport généré avec succès. CA Total : {ca_total:.2f} €.")
+print(f"Nombre de vins premium identifiés : {len(vins_premium)}.")
+print(f"Nombre de vins ordinaires identifiés : {len(vins_ordinaires)}.")
