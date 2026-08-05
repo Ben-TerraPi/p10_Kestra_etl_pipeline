@@ -1,0 +1,129 @@
+id: bottleneck_data_pipeline
+namespace: com.bottleneck.analytics
+
+description: Workflow d'automatisation mensuel et controle qualite des donnees pour BottleNeck, decoupe en etapes nominales Kestra et alimentee par des namespace files.
+
+triggers:
+  - id: planification_mensuelle
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 15 * *" # Tous les 15 du mois a 9h00
+
+tasks:
+  - id: pipeline
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    namespaceFiles:
+      namespaces:
+        - "com.bottleneck.analytics.data"
+        - "com.bottleneck.analytics.sql"
+        - "com.bottleneck.analytics.scripts"
+      include:
+        - "data/**"
+        - "scripts/**"
+        - "sql_files/**"
+      ifExists: OVERWRITE
+      folderPerNamespace: false
+    tasks:
+      - id: preparation
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb openpyxl
+        commands:
+          - python scripts/00_prepare_run.py
+
+      - id: nettoyage
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas openpyxl duckdb
+        commands:
+          - python scripts/01_cleaning.py
+
+      - id: tests_nettoyage
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb
+        commands:
+          - python scripts/02_test_cleaning.py
+
+      - id: jointure
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb
+        commands:
+          - python scripts/03_join.py
+
+      - id: tests_jointure
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb
+        commands:
+          - python scripts/04_test_join.py
+
+      - id: calcul_ca
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb
+        commands:
+          - python scripts/05_calculate_ca.py
+
+      - id: tests_totaux
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas duckdb
+        commands:
+          - python scripts/06_test_totals.py
+
+      - id: export_report
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas openpyxl duckdb
+        commands:
+          - python scripts/07_export_report.py
+
+      - id: classification_vins
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas openpyxl duckdb
+        commands:
+          - python scripts/08_classify_wines.py
+
+      - id: verification_outputs
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas
+        commands:
+          - python scripts/11_verify_outputs.py
+
+    outputFiles:
+      - "output/rapport_chiffre_affaires.xlsx"
+      - "output/vins_premium.csv"
+      - "output/vins_ordinaires.csv"
