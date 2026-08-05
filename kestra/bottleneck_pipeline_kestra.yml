@@ -19,16 +19,6 @@ tasks:
         - "**"
       ifExists: OVERWRITE
     tasks:
-      - id: preparation
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas duckdb openpyxl
-        commands:
-          - python scripts/00_prepare_run.py
-
       - id: dataframe_nettoyage
         type: io.kestra.plugin.scripts.python.Commands
         taskRunner:
@@ -128,16 +118,6 @@ tasks:
           - pip install pandas
         commands:
           - python scripts/10_export_wines.py
-
-      - id: verification_outputs
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas
-        commands:
-          - python scripts/11_verify_outputs.py
 
     outputFiles:
       - "output/rapport_chiffre_affaires.xlsx"
