@@ -5,10 +5,13 @@ from utils import (
     run_sql_tests,
     merge_data,
     run_join_tests,
-    classify_wines,
+    calcul_ca,
+    run_total_tests,
     export_report,
+    classify_wines,
+    valide_z_score,
     export_wine_lists,
-    validate_business_logic,
+
 )
 
 
@@ -33,15 +36,23 @@ def main():
     # tests après jointure
     run_join_tests(con, df_merged)
 
+    # calcul des CA
+    ca_total = calcul_ca(df_merged)
+
+    # tests de cohérence des totaux
+    run_total_tests(df_merged, ca_total)
+
     # rapport CA
-    ca_total = export_report(df_merged)
+    export_report(df_merged, ca_total)
 
     # classification des vins
     vins_premium, vins_ordinaires = classify_wines(df_merged)
-    export_wine_lists(vins_premium, vins_ordinaires)
 
-    # validation finale
-    validate_business_logic(df_merged, vins_premium, vins_ordinaires, ca_total)
+    # validation du tri des vins
+    valide_z_score(df_merged, vins_premium, vins_ordinaires, ca_total)
+
+    # export csv 
+    export_wine_lists(vins_premium, vins_ordinaires)
 
     # rapport terminal
     print(" TESTS REUSSIS : Toutes les données sont conformes aux analyses de Stéphane.")

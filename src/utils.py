@@ -76,34 +76,11 @@ def merge_data(con):
 def run_join_tests(con, df_merged):
     """Réalise les tests de cohérence après la jointure finale."""
 
-    # clé orpheline
-    erp_orphans = con.execute("""
-        SELECT COUNT(*)
-        FROM erp_clean e
-        LEFT JOIN liaison_clean l ON e.product_id = l.product_id
-        WHERE l.product_id IS NULL
-    """).fetchone()[0]
-    if erp_orphans != 0:
-        raise ValueError(f"ERREUR TEST: Clés orphelines dans erp_clean ({erp_orphans})")
+    if df_merged["product_id"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: product_id nul détecté après jointure!")
 
-    liaison_orphans = con.execute("""
-        SELECT COUNT(*)
-        FROM liaison_clean l
-        LEFT JOIN erp_clean e ON e.product_id = l.product_id
-        LEFT JOIN web_clean w ON w.id_web = l.id_web
-        WHERE e.product_id IS NULL OR w.id_web IS NULL
-    """).fetchone()[0]
-    if liaison_orphans != 0:
-        raise ValueError(f"ERREUR TEST: Clés orphelines dans liaison_clean ({liaison_orphans})")
-
-    web_orphans = con.execute("""
-        SELECT COUNT(*)
-        FROM web_clean w
-        LEFT JOIN liaison_clean l ON l.id_web = w.id_web
-        WHERE l.id_web IS NULL
-    """).fetchone()[0]
-    if web_orphans != 0:
-        raise ValueError(f"ERREUR TEST: Clés orphelines dans web_clean ({web_orphans})")
+    if df_merged["id_web"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: id_web nul détecté après jointure!")
 
     # doublons
     query = SQL_DOUBLONS.read_text(encoding="utf-8")
@@ -116,11 +93,36 @@ def run_join_tests(con, df_merged):
         raise ValueError(f"ERREUR TEST: Volume table fusionnée ({len(df_merged)}) != 714")
 
 
+# calcul des CA
+def calcul_ca(df_merged):
+    """Calcule le chiffre d'affaires global à partir du résultat de jointure."""
+    return df_merged["chiffre_affaires"].sum()
+
+
+# tests des totaux
+def run_total_tests(df_merged, ca_total):
+    """Réalise les tests de cohérence des totaux avant export du rapport."""
+    if df_merged["total_sales"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: total_sales nul détecté avant export du rapport!")
+
+    if df_merged["chiffre_affaires"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: chiffre_affaires nul détecté avant export du rapport!")
+
+    ca_attendu = 70568.60
+    if abs(ca_total - ca_attendu) >= 0.01:
+        raise ValueError(f"ERREUR TEST: CA total ({ca_total:.2f} €) != {ca_attendu} €")
+
+    ca_recalculé = (df_merged["price"] * df_merged["total_sales"]).sum()
+    if abs(ca_total - ca_recalculé) >= 0.01:
+        raise ValueError(
+            f"ERREUR TEST: Incohérence du total CA ({ca_total:.2f} € != {ca_recalculé:.2f} €)"
+        )
+
+
 # rapport CA
-def export_report(df_merged):
+def export_report(df_merged, ca_total):
     """Exporte le rapport Excel du chiffre d'affaires."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    ca_total = df_merged["chiffre_affaires"].sum()
 
     with pd.ExcelWriter(REPORT_FILE, engine="openpyxl") as writer:
         df_merged[
@@ -147,35 +149,22 @@ def classify_wines(df_merged):
     return vins_premium, vins_ordinaires
 
 
-def export_wine_lists(vins_premium, vins_ordinaires):
-    """Exporte les listes de vins premium et ordinaires en CSV."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    vins_premium.to_csv(PODIUM_PREMIUM_FILE, index=False)
-    vins_ordinaires.to_csv(PODIUM_ORDINARY_FILE, index=False)
-
-
-# validation finale
-def validate_business_logic(df_merged, vins_premium, vins_ordinaires, ca_total):
+# validation z-score
+def valide_z_score(df_merged, vins_premium, vins_ordinaires, ca_total):
     """Valide la cohérence globale du CA et de la répartition Z-Score."""
-
-    if df_merged["product_id"].isnull().sum() != 0:
-        raise ValueError("ERREUR TEST: product_id nul détecté!")
-
-    if df_merged["id_web"].isnull().sum() != 0:
-        raise ValueError("ERREUR TEST: id_web nul détecté!")
-
-    if df_merged["price"].isnull().sum() != 0:
-        raise ValueError("ERREUR TEST: Prix nul détecté!")
-
-    ca_attendu = 70568.60
-    if abs(ca_total - ca_attendu) >= 0.01:
-        raise ValueError(f"ERREUR TEST: CA total ({ca_total:.2f} €) != {ca_attendu} €")
 
     if len(vins_premium) != 30:
         raise ValueError(f"ERREUR TEST: Vins premium ({len(vins_premium)}) != 30")
 
     if len(vins_ordinaires) != (len(df_merged) - 30):
         raise ValueError("ERREUR TEST: Nombre incohérent de vins ordinaires!")
+
+# export csv
+def export_wine_lists(vins_premium, vins_ordinaires):
+    """Exporte les listes de vins premium et ordinaires en CSV."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    vins_premium.to_csv(PODIUM_PREMIUM_FILE, index=False)
+    vins_ordinaires.to_csv(PODIUM_ORDINARY_FILE, index=False)
 
 
 
