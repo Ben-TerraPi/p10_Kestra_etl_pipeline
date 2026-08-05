@@ -10,6 +10,7 @@ OUTPUT_DIR = PROJECT_DIR / "output"
 
 SQL_NETTOYAGE = SQL_DIR / "nettoyage.sql"
 SQL_JOINTURE = SQL_DIR / "jointure.sql"
+SQL_DOUBLONS = SQL_DIR / "doublons.sql"
 
 REPORT_FILE = OUTPUT_DIR / "rapport_chiffre_affaires.xlsx"
 PODIUM_PREMIUM_FILE = OUTPUT_DIR / "vins_premium.csv"
@@ -43,25 +44,23 @@ def clean_data(con):
     return con
 
 
-# tests
+# tests nettoyage
 def run_sql_tests(con):
-    """Réalise les tests d'unicité et de contrôle de volume sur DuckDB."""
+    """Réalise les tests d'unicité sur DuckDB."""
     cnt_erp = con.execute("SELECT COUNT(*), COUNT(DISTINCT product_id) FROM erp_clean").fetchone()
     cnt_web = con.execute("SELECT COUNT(*), COUNT(DISTINCT id_web) FROM web_clean").fetchone()
     
-    assert cnt_erp[0] == cnt_erp[1], f"ERREUR TEST: Doublons dans erp_clean ({cnt_erp[0]} != {cnt_erp[1]})"
-    assert cnt_web[0] == cnt_web[1], f"ERREUR TEST: Doublons dans web_clean ({cnt_web[0]} != {cnt_web[1]})"
-    assert cnt_erp[0] == 825, f"ERREUR TEST: Volume erp_clean ({cnt_erp[0]}) != 825"
-    assert cnt_web[0] == 714, f"ERREUR TEST: Volume web_clean ({cnt_web[0]}) != 714"
+    if cnt_erp[0] != cnt_erp[1]:
+        raise ValueError(f"ERREUR TEST: Doublons dans erp_clean ({cnt_erp[0]} != {cnt_erp[1]})")
 
-    inner_join_count = con.execute("""
-        SELECT COUNT(*) 
-        FROM erp_clean e 
-        INNER JOIN liaison_clean l ON e.product_id = l.product_id 
-        INNER JOIN web_clean w ON l.id_web = w.id_web
-    """).fetchone()[0]
-    
-    assert inner_join_count == 714, f"ERREUR TEST: Volume jointure interne ({inner_join_count}) != 714"
+    if cnt_web[0] != cnt_web[1]:
+        raise ValueError(f"ERREUR TEST: Doublons dans web_clean ({cnt_web[0]} != {cnt_web[1]})")
+
+    if cnt_erp[0] != 825:
+        raise ValueError(f"ERREUR TEST: Volume erp_clean ({cnt_erp[0]}) != 825")
+
+    if cnt_web[0] != 714:
+        raise ValueError(f"ERREUR TEST: Volume web_clean ({cnt_web[0]}) != 714")
 
 
 # jointures
@@ -69,9 +68,52 @@ def merge_data(con):
     """Exécute la requête SQL de jointure et retourne le DataFrame final."""
     query = SQL_JOINTURE.read_text(encoding="utf-8")
     df_merged = con.execute(query).df()
-    
-    assert len(df_merged) == 714, f"ERREUR TEST: Volume table fusionnée ({len(df_merged)}) != 714"
+
     return df_merged
+
+
+# tests après jointure
+def run_join_tests(con, df_merged):
+    """Réalise les tests de cohérence après la jointure finale."""
+
+    # clé orpheline
+    erp_orphans = con.execute("""
+        SELECT COUNT(*)
+        FROM erp_clean e
+        LEFT JOIN liaison_clean l ON e.product_id = l.product_id
+        WHERE l.product_id IS NULL
+    """).fetchone()[0]
+    if erp_orphans != 0:
+        raise ValueError(f"ERREUR TEST: Clés orphelines dans erp_clean ({erp_orphans})")
+
+    liaison_orphans = con.execute("""
+        SELECT COUNT(*)
+        FROM liaison_clean l
+        LEFT JOIN erp_clean e ON e.product_id = l.product_id
+        LEFT JOIN web_clean w ON w.id_web = l.id_web
+        WHERE e.product_id IS NULL OR w.id_web IS NULL
+    """).fetchone()[0]
+    if liaison_orphans != 0:
+        raise ValueError(f"ERREUR TEST: Clés orphelines dans liaison_clean ({liaison_orphans})")
+
+    web_orphans = con.execute("""
+        SELECT COUNT(*)
+        FROM web_clean w
+        LEFT JOIN liaison_clean l ON l.id_web = w.id_web
+        WHERE l.id_web IS NULL
+    """).fetchone()[0]
+    if web_orphans != 0:
+        raise ValueError(f"ERREUR TEST: Clés orphelines dans web_clean ({web_orphans})")
+
+    # doublons
+    query = SQL_DOUBLONS.read_text(encoding="utf-8")
+    duplicate_rows = con.execute(query).fetchone()[0]
+    if duplicate_rows != 0:
+        raise ValueError(f"ERREUR TEST: Doublons détectés après jointure ({duplicate_rows})")
+
+    # volume
+    if len(df_merged) != 714:
+        raise ValueError(f"ERREUR TEST: Volume table fusionnée ({len(df_merged)}) != 714")
 
 
 # rapport CA
@@ -116,15 +158,24 @@ def export_wine_lists(vins_premium, vins_ordinaires):
 def validate_business_logic(df_merged, vins_premium, vins_ordinaires, ca_total):
     """Valide la cohérence globale du CA et de la répartition Z-Score."""
 
-    assert df_merged["product_id"].isnull().sum() == 0, "ERREUR TEST: product_id nul détecté!"
-    assert df_merged["id_web"].isnull().sum() == 0, "ERREUR TEST: id_web nul détecté!"
-    assert df_merged["price"].isnull().sum() == 0, "ERREUR TEST: Prix nul détecté!"
+    if df_merged["product_id"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: product_id nul détecté!")
+
+    if df_merged["id_web"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: id_web nul détecté!")
+
+    if df_merged["price"].isnull().sum() != 0:
+        raise ValueError("ERREUR TEST: Prix nul détecté!")
 
     ca_attendu = 70568.60
-    assert abs(ca_total - ca_attendu) < 0.01, f"ERREUR TEST: CA total ({ca_total:.2f} €) != {ca_attendu} €"
+    if abs(ca_total - ca_attendu) >= 0.01:
+        raise ValueError(f"ERREUR TEST: CA total ({ca_total:.2f} €) != {ca_attendu} €")
 
-    assert len(vins_premium) == 30, f"ERREUR TEST: Vins premium ({len(vins_premium)}) != 30"
-    assert len(vins_ordinaires) == (len(df_merged) - 30), "ERREUR TEST: Nombre incohérent de vins ordinaires!"
+    if len(vins_premium) != 30:
+        raise ValueError(f"ERREUR TEST: Vins premium ({len(vins_premium)}) != 30")
+
+    if len(vins_ordinaires) != (len(df_merged) - 30):
+        raise ValueError("ERREUR TEST: Nombre incohérent de vins ordinaires!")
 
 
 

@@ -4,6 +4,7 @@ from utils import (
     clean_data,
     run_sql_tests,
     merge_data,
+    run_join_tests,
     classify_wines,
     export_report,
     export_wine_lists,
@@ -23,11 +24,14 @@ def main():
     # nettoyage 
     clean_data(con)
 
-    # tests 
+    # tests après nettoyage
     run_sql_tests(con)
 
     # jointures
     df_merged = merge_data(con)
+
+    # tests après jointure
+    run_join_tests(con, df_merged)
 
     # rapport CA
     ca_total = export_report(df_merged)
