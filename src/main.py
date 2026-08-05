@@ -26,7 +26,7 @@ def main():
     # tests 
     run_sql_tests(con)
 
-    # jintures
+    # jointures
     df_merged = merge_data(con)
 
     # rapport CA
