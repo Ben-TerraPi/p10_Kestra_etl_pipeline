@@ -6,7 +6,7 @@ import duckdb
 PROJECT_DIR = Path.cwd()
 WORK_DIR = PROJECT_DIR / "work"
 PIPELINE_DB = WORK_DIR / "bottleneck.duckdb"
-SQL_FILE = PROJECT_DIR / "sql_files" / "jointure.sql"
+SQL_FILE = PROJECT_DIR / "sql" / "jointure.sql"
 MERGED_FILE = WORK_DIR / "merged.csv"
 
 

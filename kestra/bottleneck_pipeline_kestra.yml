@@ -12,16 +12,12 @@ tasks:
   - id: pipeline
     type: io.kestra.plugin.core.flow.WorkingDirectory
     namespaceFiles:
+      enabled: true
       namespaces:
-        - "com.bottleneck.analytics.data"
-        - "com.bottleneck.analytics.sql"
-        - "com.bottleneck.analytics.scripts"
+        - "com.bottleneck.analytics"
       include:
-        - "data/**"
-        - "scripts/**"
-        - "sql_files/**"
+        - "**"
       ifExists: OVERWRITE
-      folderPerNamespace: false
     tasks:
       - id: preparation
         type: io.kestra.plugin.scripts.python.Commands
@@ -33,7 +29,7 @@ tasks:
         commands:
           - python scripts/00_prepare_run.py
 
-      - id: nettoyage
+      - id: dataframe_nettoyage
         type: io.kestra.plugin.scripts.python.Commands
         taskRunner:
           type: io.kestra.plugin.scripts.runner.docker.Docker
@@ -112,6 +108,26 @@ tasks:
           - pip install pandas openpyxl duckdb
         commands:
           - python scripts/08_classify_wines.py
+
+      - id: validation_tri_vins
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas
+        commands:
+          - python scripts/09_test_scores.py
+
+      - id: export_csv
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.13-slim
+        beforeCommands:
+          - pip install pandas
+        commands:
+          - python scripts/10_export_wines.py
 
       - id: verification_outputs
         type: io.kestra.plugin.scripts.python.Commands

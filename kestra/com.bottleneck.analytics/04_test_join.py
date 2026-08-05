@@ -8,7 +8,7 @@ PROJECT_DIR = Path.cwd()
 WORK_DIR = PROJECT_DIR / "work"
 PIPELINE_DB = WORK_DIR / "bottleneck.duckdb"
 MERGED_FILE = WORK_DIR / "merged.csv"
-SQL_DOUBLONS = PROJECT_DIR / "sql_files" / "doublons.sql"
+SQL_DOUBLONS = PROJECT_DIR / "sql" / "doublons.sql"
 
 
 con = duckdb.connect(str(PIPELINE_DB))

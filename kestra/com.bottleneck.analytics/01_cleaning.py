@@ -7,7 +7,7 @@ import pandas as pd
 PROJECT_DIR = Path.cwd()
 WORK_DIR = PROJECT_DIR / "work"
 DATA_DIR = PROJECT_DIR / "data"
-SQL_FILE = PROJECT_DIR / "sql_files" / "nettoyage.sql"
+SQL_FILE = PROJECT_DIR / "sql" / "nettoyage.sql"
 PIPELINE_DB = WORK_DIR / "bottleneck.duckdb"
 
 
