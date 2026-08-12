@@ -10,8 +10,6 @@ L'objectif est de mettre en place un pipeline ETL/ELT automatisé permettant de 
 
 Le projet exploite des données issues de plusieurs fichiers Excel, puis orchestre les traitements via Kestra avec Docker.
 
-![Architecture](image/architecture_bottleneck.png)
-
 ---
 
 ## Prérequis
@@ -79,7 +77,9 @@ Note : le workflow Kestra utilise des namespace files. Il faut donc créer le na
 │   └── nettoyage.sql
 ```
 
-Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches dans l'ordre suivant.
+Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l'architecture suivante.
+
+![Architecture](image/architecture_bottleneck.png)
 
 ### 1. Netoyage des données
 
@@ -141,16 +141,3 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches dans l'
 - produit les fichiers :
   - `output/vins_premium.csv`
   - `output/vins_ordinaires.csv`
-
----
-
-## Règles métier et contrôles de qualité
-
-Le pipeline vérifie plusieurs règles importantes :
-
-- absence de doublons sur les identifiants clés ;
-- volume attendu après nettoyage : `825` lignes pour ERP nettoyé ;
-- volume attendu après jointure : `714` lignes ;
-- CA total attendu : `70568.60 €` ;
-- classification premium : `30` produits ;
-- les vins premium doivent avoir un `z_score` strictement supérieur à `2`.
