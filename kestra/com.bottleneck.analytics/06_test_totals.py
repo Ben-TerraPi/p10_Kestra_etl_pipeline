@@ -9,9 +9,11 @@ MERGED_FILE = WORK_DIR / "merged.csv"
 CA_TOTAL_FILE = WORK_DIR / "ca_total.txt"
 
 
+# lecture fichiers
 df_merged = pd.read_csv(MERGED_FILE)
 ca_total = float(CA_TOTAL_FILE.read_text(encoding="utf-8"))
 
+# cohérence des totaux
 if df_merged["total_sales"].isnull().sum() != 0:
 	raise ValueError("ERREUR TEST: total_sales nul détecté avant export du rapport!")
 

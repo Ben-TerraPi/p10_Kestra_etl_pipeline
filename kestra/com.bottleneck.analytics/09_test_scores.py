@@ -11,11 +11,13 @@ ORDINARY_FILE = WORK_DIR / "vins_ordinaires.csv"
 CA_TOTAL_FILE = WORK_DIR / "ca_total.txt"
 
 
+# lecture des fichiers
 df_merged = pd.read_csv(MERGED_FILE)
 ca_total = float(CA_TOTAL_FILE.read_text(encoding="utf-8"))
 vins_premium = pd.read_csv(PREMIUM_FILE)
 vins_ordinaires = pd.read_csv(ORDINARY_FILE)
 
+# validation z-score
 if len(vins_premium) != 30:
 	raise ValueError(f"ERREUR TEST: Vins premium ({len(vins_premium)}) != 30")
 

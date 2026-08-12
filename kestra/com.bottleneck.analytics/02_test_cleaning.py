@@ -8,7 +8,10 @@ WORK_DIR = PROJECT_DIR / "work"
 PIPELINE_DB = WORK_DIR / "bottleneck.duckdb"
 
 
+#conexion duckdb
 con = duckdb.connect(str(PIPELINE_DB))
+
+# tests unicité
 cnt_erp = con.execute("SELECT COUNT(*), COUNT(DISTINCT product_id) FROM erp_clean").fetchone()
 cnt_web = con.execute("SELECT COUNT(*), COUNT(DISTINCT id_web) FROM web_clean").fetchone()
 

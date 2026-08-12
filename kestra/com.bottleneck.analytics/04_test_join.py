@@ -11,7 +11,10 @@ MERGED_FILE = WORK_DIR / "merged.csv"
 SQL_DOUBLONS = PROJECT_DIR / "sql" / "doublons.sql"
 
 
+# conexion duckdn
 con = duckdb.connect(str(PIPELINE_DB))
+
+# lecture du csv pour test
 df_merged = pd.read_csv(MERGED_FILE)
 
 if df_merged["product_id"].isnull().sum() != 0:
