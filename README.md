@@ -4,7 +4,7 @@ Ce projet a été réalisé dans le cadre du parcours de formation Data Engineer
 
 Titre du projet :
 
-`Mettez en place un pipeline d'orchestration des flux`
+**Mettez en place un pipeline d'orchestration des flux**
 
 L'objectif est de mettre en place un pipeline ETL/ELT automatisé permettant de nettoyer des données de ventes, vérifier leur qualité, calculer le chiffre d'affaires, produire un rapport Excel et classer les produits selon un score Z afin de distinguer les vins premium des vins ordinaires.
 
