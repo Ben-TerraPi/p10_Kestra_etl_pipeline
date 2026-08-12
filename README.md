@@ -10,6 +10,8 @@ L'objectif est de mettre en place un pipeline ETL/ELT automatisé permettant de 
 
 Le projet exploite des données issues de plusieurs fichiers Excel, puis orchestre les traitements via Kestra avec Docker.
 
+L’intérêt d’une orchestration avec Kestra réside dans la capacité à découper un workflow complexe en tâches indépendantes, chacune ayant un rôle précis : nettoyage, validation, jointure, calcul, export et classification. Ce découpage facilite la maintenance, améliore la traçabilité des erreurs et permet de relancer uniquement la partie concernée en cas de problème. Il rend également le pipeline plus lisible, plus modulaire et plus facilement évolutif.
+
 ---
 
 ## Prérequis
@@ -51,7 +53,9 @@ docker compose down -v
 
 ## Déroulé du workflow Kestra
 
-Note : le workflow Kestra utilise des namespace files. Il faut donc créer le namespace `com.bottleneck.analytics` et y charger les différents fichiers comme selon cette arborescence :
+Ce workflow Kestra utilise des namespace files. Les namespace files permettent de stocker et d’exécuter des scripts Python directement depuis Kestra. Cela simplifie la gestion des fichiers de code et des dépendances, rend le workflow portable et permet de centraliser la logique métier de chaque étape dans un environnement d’exécution bien défini.
+
+> Note : Il faut donc créer le namespace `com.bottleneck.analytics` et y charger les différents fichiers selon cette arborescence :
 
 ```text
 .
