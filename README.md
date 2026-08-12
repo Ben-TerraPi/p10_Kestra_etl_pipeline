@@ -81,7 +81,7 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l
 
 ![Architecture](image/architecture_bottleneck.png)
 
-### 1. Netoyage des données
+### 1. Chargement et netoyage des données
 
 - `01_cleaning.py`
 - nettoyage des colonnes et des types ;
