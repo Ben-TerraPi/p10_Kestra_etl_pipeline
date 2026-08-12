@@ -53,7 +53,7 @@ docker compose down -v
 
 ## Déroulé du workflow Kestra
 
-> Note : le workflow Kestra utilise des namespace files. Il faut donc créer le namespace `com.bottleneck.analytics` et y charger les différents scripts depuis comme suit :
+Note : le workflow Kestra utilise des namespace files. Il faut donc créer le namespace `com.bottleneck.analytics` et y charger les différents fichiers comme selon cette arborescence :
 
 ```text
 .
