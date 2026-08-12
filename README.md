@@ -62,23 +62,17 @@ Ce workflow Kestra utilise des namespace files. Les namespace files permettent d
 ├── data/
 │   ├── Fichier_erp.xlsx
 │   ├── fichier_liaison.xlsx
-│   ├── Fichier_web.xlsx
-│   └── exploration_data.py
+│   └── Fichier_web.xlsx
 ├── scripts/
 │   ├── 01_cleaning.py
-│   ├── 02_test_cleaning.py
 │   ├── 03_join.py
-│   ├── 04_test_join.py
 │   ├── 05_calculate_ca.py
-│   ├── 06_test_totals.py
 │   ├── 07_export_report.py
 │   ├── 08_classify_wines.py
-│   ├── 09_test_scores.py
 │   └── 10_export_wines.py
 └── sql/
-│   ├── doublons.sql
-│   ├── jointures.sql
-│   └── nettoyage.sql
+    ├── jointures.sql
+    └── nettoyage.sql
 ```
 
 Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l'architecture suivante.
@@ -94,7 +88,6 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l
 
 ### 2. Tests de qualité après nettoyage
 
-- `02_test_cleaning.py`
 - vérifie qu'il n'y a pas de doublons sur `product_id` et `id_web` ;
 - vérifie le nombre attendu de lignes après nettoyage.
 
@@ -106,7 +99,6 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l
 
 ### 4. Tests de cohérence après jointure
 
-- `04_test_join.py`
 - validation des clés ;
 - contrôle du volume final ;
 - détection des doublons restants.
@@ -119,7 +111,6 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l
 
 ### 6. Contrôle des totaux
 
-- `06_test_totals.py`
 - vérifie que le CA calculé est bien égal au montant attendu : `70568.60 €`.
 
 ### 7. Export du rapport
@@ -135,7 +126,6 @@ Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l
 
 ### 9. Validation du tri
 
-- `09_test_scores.py`
 - vérifie que 30 vins sont classés premium ;
 - vérifie que les autres lignes restent dans la catégorie ordinaire.
 
