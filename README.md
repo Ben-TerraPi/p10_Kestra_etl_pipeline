@@ -30,10 +30,10 @@ Pour exécuter le workflow Kestra :
 
 ```bash
 git clone <url-du-repo>
-cd p10_
+cd p10_Kestra_etl_pipeline
 ```
 
-### 2. Lancer Kestra avec Docker
+### 2. Lancer Kestra avec docker-compose.yml
 
 ```bash
 docker compose up -d
