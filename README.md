@@ -27,7 +27,7 @@ Le projet exploite des données issues de plusieurs fichiers Excel, puis orchest
 ### 1. Cloner le dépôt
 
 ```bash
-git clone <url-du-repo>
+git clone https://github.com/Ben-TerraPi/p10_Kestra_etl_pipeline.git
 cd p10_Kestra_etl_pipeline
 ```
 
