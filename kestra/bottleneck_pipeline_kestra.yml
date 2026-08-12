@@ -88,6 +88,8 @@ tasks:
           - pip install pandas openpyxl duckdb
         commands:
           - python scripts/07_export_report.py
+        outputFiles:
+          - "output/rapport_chiffre_affaires.xlsx"
 
       - id: classification_vins
         type: io.kestra.plugin.scripts.python.Commands
@@ -118,8 +120,6 @@ tasks:
           - pip install pandas
         commands:
           - python scripts/10_export_wines.py
-
-    outputFiles:
-      - "output/rapport_chiffre_affaires.xlsx"
-      - "output/vins_premium.csv"
-      - "output/vins_ordinaires.csv"
+        outputFiles:
+          - "output/vins_premium.csv"
+          - "output/vins_ordinaires.csv"
