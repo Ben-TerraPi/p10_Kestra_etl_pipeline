@@ -19,6 +19,12 @@ tasks:
         - "**"
       ifExists: OVERWRITE
     tasks:
+      - id: get_workdir
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - echo "::{\"outputs\":{\"dir\":\"$(pwd)\"}}::"
+          
+          
       - id: dataframe_nettoyage
         type: io.kestra.plugin.scripts.python.Commands
         taskRunner:
@@ -29,15 +35,29 @@ tasks:
         commands:
           - python scripts/01_cleaning.py
 
+
       - id: tests_nettoyage
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas duckdb
-        commands:
-          - python scripts/02_test_cleaning.py
+        type: io.kestra.plugin.jdbc.duckdb.Queries
+        url: "jdbc:duckdb:{{ outputs.get_workdir.vars.dir }}/work/bottleneck.duckdb"
+        fetchType: FETCH
+        sql: |
+          SELECT CASE
+            WHEN (SELECT COUNT(*) FROM erp_clean)
+                != (SELECT COUNT(DISTINCT product_id) FROM erp_clean)
+              THEN error('ERREUR TEST: Doublons dans erp_clean')
+
+            WHEN (SELECT COUNT(*) FROM web_clean)
+                != (SELECT COUNT(DISTINCT id_web) FROM web_clean)
+              THEN error('ERREUR TEST: Doublons dans web_clean')
+
+            WHEN (SELECT COUNT(*) FROM erp_clean) != 825
+              THEN error('ERREUR TEST: Volume erp_clean != 825')
+
+            WHEN (SELECT COUNT(*) FROM web_clean) != 714
+              THEN error('ERREUR TEST: Volume web_clean != 714')
+
+            ELSE 'PASS: tests_nettoyage'
+          END AS result;
 
       - id: jointure
         type: io.kestra.plugin.scripts.python.Commands
@@ -49,15 +69,36 @@ tasks:
         commands:
           - python scripts/03_join.py
 
+
       - id: tests_jointure
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas duckdb
-        commands:
-          - python scripts/04_test_join.py
+        type: io.kestra.plugin.jdbc.duckdb.Queries
+        url: "jdbc:duckdb:{{ outputs.get_workdir.vars.dir }}/work/bottleneck.duckdb"
+        fetchType: FETCH
+        sql: |
+          SELECT CASE
+            WHEN (SELECT COUNT(*) FROM merged WHERE product_id IS NULL) != 0
+              THEN error('ERREUR TEST: product_id nul détecté après jointure!')
+
+            WHEN (SELECT COUNT(*) FROM merged WHERE id_web IS NULL) != 0
+              THEN error('ERREUR TEST: id_web nul détecté après jointure!')
+
+            WHEN (
+              SELECT COUNT(*)
+              FROM (
+                SELECT product_id, id_web, COUNT(*) AS cnt
+                FROM merged
+                GROUP BY product_id, id_web
+                HAVING COUNT(*) > 1
+              ) doublons
+            ) != 0
+              THEN error('ERREUR TEST: Doublons détectés après jointure')
+
+            WHEN (SELECT COUNT(*) FROM merged) != 714
+              THEN error('ERREUR TEST: Volume table fusionnée != 714')
+
+            ELSE 'PASS: tests_jointure'
+          END AS result;
+
 
       - id: calcul_ca
         type: io.kestra.plugin.scripts.python.Commands
@@ -69,15 +110,28 @@ tasks:
         commands:
           - python scripts/05_calculate_ca.py
 
+
       - id: tests_totaux
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas duckdb
-        commands:
-          - python scripts/06_test_totals.py
+        type: io.kestra.plugin.jdbc.duckdb.Queries
+        url: "jdbc:duckdb:{{ outputs.get_workdir.vars.dir }}/work/bottleneck.duckdb"
+        fetchType: FETCH
+        sql: |
+          SELECT CASE
+            WHEN (SELECT COUNT(*) FROM merged WHERE total_sales IS NULL) != 0
+              THEN error('ERREUR TEST: total_sales nul détecté avant export du rapport!')
+
+            WHEN (SELECT COUNT(*) FROM merged WHERE chiffre_affaires IS NULL) != 0
+              THEN error('ERREUR TEST: chiffre_affaires nul détecté avant export du rapport!')
+
+            WHEN NOT (
+              SELECT ABS(SUM(chiffre_affaires) - 70568.60) < 0.01
+              FROM merged
+            )
+              THEN error('ERREUR TEST: CA total != 70568.60 €')
+
+            ELSE 'PASS: tests_totaux'
+          END AS result;
+
 
       - id: export_report
         type: io.kestra.plugin.scripts.python.Commands
@@ -101,15 +155,45 @@ tasks:
         commands:
           - python scripts/08_classify_wines.py
 
+
       - id: validation_tri_vins
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.13-slim
-        beforeCommands:
-          - pip install pandas
-        commands:
-          - python scripts/09_test_scores.py
+        type: io.kestra.plugin.jdbc.duckdb.Queries
+        url: "jdbc:duckdb:{{ outputs.get_workdir.vars.dir }}/work/bottleneck.duckdb"
+        fetchType: FETCH
+        sql: |
+          SELECT CASE
+            WHEN (SELECT COUNT(*) FROM merged WHERE z_score > 2) != 30
+              THEN error('ERREUR TEST: Vins premium != 30')
+
+            WHEN (SELECT COUNT(*) FROM merged WHERE z_score <= 2)
+                != ((SELECT COUNT(*) FROM merged) - 30)
+              THEN error('ERREUR TEST: Nombre incohérent de vins ordinaires!')
+
+            WHEN (
+              SELECT COUNT(*)
+              FROM merged
+              WHERE z_score > 2
+                AND z_score <= 2
+            ) != 0
+              THEN error('ERREUR TEST: Un vin premium a un z_score incohérent!')
+
+            WHEN (
+              SELECT COUNT(*)
+              FROM merged
+              WHERE z_score <= 2
+                AND z_score > 2
+            ) != 0
+              THEN error('ERREUR TEST: Un vin ordinaire a un z_score incohérent!')
+
+            WHEN NOT (
+              SELECT ABS(SUM(chiffre_affaires) - 70568.60) < 0.01
+              FROM merged
+            )
+              THEN error('ERREUR TEST: CA total != 70568.60 €')
+
+            ELSE 'PASS: validation_tri_vins'
+          END AS result;
+
 
       - id: export_csv
         type: io.kestra.plugin.scripts.python.Commands
@@ -123,3 +207,5 @@ tasks:
         outputFiles:
           - "output/vins_premium.csv"
           - "output/vins_ordinaires.csv"
+
+

@@ -12,13 +12,23 @@ MERGED_FILE = WORK_DIR / "merged.csv"
 WORK_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# connexion duckdb
+# Connexion DuckDB
 con = duckdb.connect(str(PIPELINE_DB))
 
-# jointure avec requeête SQL
-df_merged = con.execute(SQL_FILE.read_text(encoding="utf-8")).df()
+# Jointure avec requête SQL
+df_merged = con.execute(
+    SQL_FILE.read_text(encoding="utf-8")
+).df()
 
-# création d'un csv pour test et suite
+# Création de la table merged dans DuckDB
+con.execute("DROP TABLE IF EXISTS merged")
+con.register("df_merged", df_merged)
+con.execute("""
+    CREATE TABLE merged AS
+    SELECT * FROM df_merged
+""")
+
+# Création du CSV pour les tests et la suite
 df_merged.to_csv(MERGED_FILE, index=False)
 
 con.close()
