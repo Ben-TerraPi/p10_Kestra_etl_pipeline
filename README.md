@@ -18,8 +18,6 @@ Le projet exploite des données issues de plusieurs fichiers Excel, puis orchest
 
 ### Docker
 
-Pour exécuter le workflow Kestra :
-
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/macOS)
 - [Docker Engine](https://docs.docker.com/engine/install/) (Linux)
 
