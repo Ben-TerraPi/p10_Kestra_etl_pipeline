@@ -1,6 +1,7 @@
 kestra.txt
 output/*
 src/*
+data/exploration_data.py
 
 .vscode
 
