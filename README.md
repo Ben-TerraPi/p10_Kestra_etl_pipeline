@@ -18,6 +18,7 @@ Ce projet consiste à
 ### Docker
 
 [Docker Desktop](https://www.docker.com/products/docker-desktop/) (windows/mac)
+
 [Docker Engine](https://docs.docker.com/engine/install/) (Linux)
 
 ---
@@ -25,9 +26,9 @@ Ce projet consiste à
 ## Commandes utiles
 
 **Docker**
-- docker compose up (voir le démarrage et le debug en direct)
-- docker compose up -d (lancer l’environnement puis continuer à travailler)
-- docker compose down -v (supprime les conteneurs et les volumes associés)
+- `docker compose up` (voir le démarrage et le debug en direct)
+- `docker compose up -d` (lancer l’environnement puis continuer à travailler)
+- `docker compose down -v` (supprime les conteneurs et les volumes associés)
 
 UI kestra disponible : `http://localhost:8080/`
 
