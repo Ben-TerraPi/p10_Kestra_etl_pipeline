@@ -55,7 +55,7 @@ docker compose down -v
 
 Ce workflow Kestra utilise des namespace files. Les namespace files permettent de stocker et d’exécuter des scripts Python directement depuis Kestra. Cela simplifie la gestion des fichiers de code et des dépendances, rend le workflow portable et permet de centraliser la logique métier de chaque étape dans un environnement d’exécution bien défini.
 
-> Note : Il faut donc créer le namespace `com.bottleneck.analytics` et y charger les différents fichiers selon cette arborescence :
+> Note : Il faut donc importer les dossier dans le namespace `com.bottleneck.analytics` en suivant cette arborescence :
 
 ```text
 .
