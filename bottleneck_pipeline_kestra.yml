@@ -59,6 +59,7 @@ tasks:
             ELSE 'PASS: tests_nettoyage'
           END AS result;
 
+
       - id: jointure
         type: io.kestra.plugin.scripts.python.Commands
         taskRunner:
@@ -133,7 +134,7 @@ tasks:
           END AS result;
 
 
-      - id: export_report
+      - id: export_rapport
         type: io.kestra.plugin.scripts.python.Commands
         taskRunner:
           type: io.kestra.plugin.scripts.runner.docker.Docker
@@ -141,9 +142,10 @@ tasks:
         beforeCommands:
           - pip install pandas openpyxl duckdb
         commands:
-          - python scripts/07_export_report.py
+          - python scripts/07_export_rapport.py
         outputFiles:
           - "output/rapport_chiffre_affaires.xlsx"
+
 
       - id: classification_vins
         type: io.kestra.plugin.scripts.python.Commands
