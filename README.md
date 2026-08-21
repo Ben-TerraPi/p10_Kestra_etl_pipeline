@@ -51,31 +51,15 @@ docker compose down -v
 
 ---
 
-## Déroulé du workflow Kestra
+## Déroulé du workflow bottleneck_pipeline_kestra.yml
 
 Ce workflow Kestra utilise des namespace files. Les namespace files permettent de stocker et d’exécuter des scripts Python directement depuis Kestra. Cela simplifie la gestion des fichiers de code et des dépendances, rend le workflow portable et permet de centraliser la logique métier de chaque étape dans un environnement d’exécution bien défini.
 
-> Note : Il faut donc importer les dossier dans le namespace `com.bottleneck.analytics` en suivant cette arborescence :
+> Note : Il faut donc importer les dossier dans le namespace `com.bottleneck.analytics` en suivant l'arborescence ci-dessous :
 
-```text
-.
-├── data/
-│   ├── Fichier_erp.xlsx
-│   ├── fichier_liaison.xlsx
-│   └── Fichier_web.xlsx
-├── scripts/
-│   ├── 01_cleaning.py
-│   ├── 03_join.py
-│   ├── 05_calculate_ca.py
-│   ├── 07_export_report.py
-│   ├── 08_classify_wines.py
-│   └── 10_export_wines.py
-└── sql/
-    ├── jointures.sql
-    └── nettoyage.sql
-```
+![UI Kestra](image/kestra.png)
 
-Le fichier `kestra/bottleneck_pipeline_kestra.yml` orchestre les tâches selon l'architecture suivante.
+L'orchestration des tâches s'effectue selon le flow suivant.
 
 ![Architecture](image/architecture_bottleneck.png)
 
