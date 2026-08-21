@@ -70,7 +70,7 @@ L'orchestration des tâches s'effectue selon le flow suivant.
 - suppression des doublons ;
 - normalisation des tables sources.
 
-### 2. Tests de qualité après nettoyage
+### 2. Tests de qualité SQL après nettoyage 
 
 - vérifie qu'il n'y a pas de doublons sur `product_id` et `id_web` ;
 - vérifie le nombre attendu de lignes après nettoyage.
@@ -81,7 +81,7 @@ L'orchestration des tâches s'effectue selon le flow suivant.
 - fusion des tables ERP, web et liaison ;
 - construction d'une table unique de produits.
 
-### 4. Tests de cohérence après jointure
+### 4. Tests de cohérence SQL après jointure
 
 - validation des clés ;
 - contrôle du volume final ;
@@ -93,7 +93,7 @@ L'orchestration des tâches s'effectue selon le flow suivant.
 - calcule le `chiffre_affaires` par ligne ;
 - totalise le CA global.
 
-### 6. Contrôle des totaux
+### 6. Contrôle SQL des totaux
 
 - vérifie que le CA calculé est bien égal au montant attendu : `70568.60 €`.
 
@@ -108,7 +108,7 @@ L'orchestration des tâches s'effectue selon le flow suivant.
 - calcule le z-score sur les prix ;
 - distingue les vins premium (`z_score > 2`) des vins ordinaires (`z_score <= 2`).
 
-### 9. Validation du tri
+### 9. Validation SQL du tri
 
 - vérifie que 30 vins sont classés premium ;
 - vérifie que les autres lignes restent dans la catégorie ordinaire.
