@@ -51,7 +51,7 @@ docker compose down -v
 
 ---
 
-## Déroulé du workflow bottleneck_pipeline_kestra.yml
+## Déroulé du workflow [bottleneck_pipeline_kestra.yml](https://github.com/Ben-TerraPi/p10_Kestra_etl_pipeline/blob/main/bottleneck_pipeline_kestra.yml)
 
 Ce workflow Kestra utilise des namespace files. Les namespace files permettent de stocker et d’exécuter des scripts Python directement depuis Kestra. Cela simplifie la gestion des fichiers de code et des dépendances, rend le workflow portable et permet de centraliser la logique métier de chaque étape dans un environnement d’exécution bien défini.
 
