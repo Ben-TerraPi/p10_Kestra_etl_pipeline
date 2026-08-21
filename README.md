@@ -119,3 +119,5 @@ L'orchestration des tâches s'effectue selon le flow suivant.
 - produit les fichiers :
   - `output/vins_premium.csv`
   - `output/vins_ordinaires.csv`
+
+![Outputs](image/output.png)
