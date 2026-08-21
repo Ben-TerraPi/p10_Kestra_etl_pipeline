@@ -10,7 +10,7 @@ L'objectif est de mettre en place un pipeline ETL/ELT automatisé permettant de 
 
 Le projet exploite des données issues de plusieurs fichiers Excel, puis orchestre les traitements via Kestra avec Docker.
 
-L’intérêt d’une orchestration avec Kestra réside dans la capacité à découper un workflow complexe en tâches indépendantes, chacune ayant un rôle précis : nettoyage, validation, jointure, calcul, export et classification. Ce découpage facilite la maintenance, améliore la traçabilité des erreurs et permet de relancer uniquement la partie concernée en cas de problème. Il rend également le pipeline plus lisible, plus modulaire et plus facilement évolutif.
+L’intérêt d’une orchestration avec Kestra réside dans la capacité à découper un workflow complexe en tâches indépendantes, chacune ayant un rôle précis. Ce découpage facilite la maintenance, améliore la traçabilité des erreurs et permet de relancer uniquement la partie concernée en cas de problème. Il rend également le pipeline plus lisible, plus modulaire et plus facilement évolutif.
 
 ---
 
